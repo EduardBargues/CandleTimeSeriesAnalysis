@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TeslaAnalysis.Indicators
+namespace CandleTimeSeriesAnalysis.Indicators
 {
     public abstract class Indicator : IIndicator
     {

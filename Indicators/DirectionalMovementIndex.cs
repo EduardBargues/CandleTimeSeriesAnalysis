@@ -1,7 +1,7 @@
 ﻿using System;
-using Common;
+using CommonUtils;
 
-namespace TeslaAnalysis.Indicators
+namespace CandleTimeSeriesAnalysis.Indicators
 {
     public class DirectionalMovementIndex : Indicator
     {

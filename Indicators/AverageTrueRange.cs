@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
-using Common;
+using CommonUtils;
 
-namespace TeslaAnalysis.Indicators
+namespace CandleTimeSeriesAnalysis.Indicators
 {
     public class AverageTrueRange : Indicator
     {
