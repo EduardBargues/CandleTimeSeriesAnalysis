@@ -2,7 +2,7 @@
 using System.Globalization;
 using MoreLinq;
 
-namespace TeslaAnalysis
+namespace CandleTimeSeriesAnalysis
 {
     public enum TradeType
     {

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
-namespace TeslaAnalysis
+namespace CandleTimeSeriesAnalysis
 {
     public static class ExtensionsIEnumerableCandle
     {

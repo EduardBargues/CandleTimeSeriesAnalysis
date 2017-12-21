@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TeslaAnalysis
+namespace CandleTimeSeriesAnalysis
 {
     public class Candle
     {

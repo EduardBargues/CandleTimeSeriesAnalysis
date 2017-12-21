@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using CommonUtils;
 using MoreLinq;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using OxyPlot.WindowsForms;
 
-namespace TeslaAnalysis
+namespace CandleTimeSeriesAnalysis
 {
     public class CandleTimeSeries
     {

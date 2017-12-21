@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace TeslaAnalysis
+namespace CandleTimeSeriesAnalysis
 {
     public class CandleTimeSeriesPlotInfo
     {
