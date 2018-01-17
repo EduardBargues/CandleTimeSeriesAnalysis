@@ -1,6 +1,6 @@
-﻿using System;
+﻿using CommonUtils;
+using System;
 using System.Linq;
-using CommonUtils;
 
 namespace CandleTimeSeriesAnalysis.Indicators
 {
@@ -12,8 +12,7 @@ namespace CandleTimeSeriesAnalysis.Indicators
         }
 
         public static AverageDirectionalMovementPlus Create(
-            int periods,
-            int smoothingPeriods)
+            int periods)
         {
             DirectionalMovementPlus dmPlus = DirectionalMovementPlus.Create();
 
@@ -25,7 +24,7 @@ namespace CandleTimeSeriesAnalysis.Indicators
                     .Select(idx => series[idx])
                     .ToArray();
                 double ema = candles
-                    .WeightedAverage((cdl, idx) => dmPlus[series, cdl.Start], 
+                    .WeightedAverage((cdl, idx) => dmPlus[series, cdl.Start],
                                      (cdl, idx) => candles.Length - idx);
                 return ema;
             }

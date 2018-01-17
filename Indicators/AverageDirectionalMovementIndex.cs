@@ -1,6 +1,6 @@
-﻿using System;
+﻿using CommonUtils;
+using System;
 using System.Linq;
-using CommonUtils;
 
 namespace CandleTimeSeriesAnalysis.Indicators
 {
@@ -15,12 +15,12 @@ namespace CandleTimeSeriesAnalysis.Indicators
             int periods,
             int smoothingPeriods)
         {
-            DirectionalMovementIndex dmi = DirectionalMovementIndex.Create(periods, smoothingPeriods);
+            DirectionalMovementIndex dmi = DirectionalMovementIndex.Create(periods);
             double Function(CandleTimeSeries series, DateTime instant)
             {
                 Candle candle = series[instant];
                 int index = series.GetIndex(candle);
-                Candle[] candles = index.GetIntegersTo(Math.Max(1, index - periods))
+                Candle[] candles = index.GetIntegersTo(Math.Max(1, index - smoothingPeriods))
                     .Select(idx => series[idx])
                     .ToArray();
                 double ema = candles

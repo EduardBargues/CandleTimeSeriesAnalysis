@@ -1,5 +1,5 @@
-﻿using System;
-using CommonUtils;
+﻿using CommonUtils;
+using System;
 
 namespace CandleTimeSeriesAnalysis.Indicators
 {
@@ -10,10 +10,10 @@ namespace CandleTimeSeriesAnalysis.Indicators
 
         }
 
-        public static DirectionalIndicatorMinus Create(int periods, int smoothingPeriods)
+        public static DirectionalIndicatorMinus Create(int periods)
         {
-            AverageDirectionalMovementMinus admMinus = AverageDirectionalMovementMinus.Create(periods, smoothingPeriods);
-            AverageTrueRange atr = AverageTrueRange.Create(smoothingPeriods);
+            AverageDirectionalMovementMinus admMinus = AverageDirectionalMovementMinus.Create(periods);
+            AverageTrueRange atr = AverageTrueRange.Create(periods);
 
             double Function(CandleTimeSeries series, DateTime instant)
             {
