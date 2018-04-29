@@ -1,179 +1,171 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
-using CommonUtils;
+﻿using CommonUtils;
 using MoreLinq;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using OxyPlot.WindowsForms;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace CandleTimeSeriesAnalysis
 {
     public class CandleTimeSeries
     {
-        private readonly Dictionary<DateTime, Candle> candlesByDate = new Dictionary<DateTime, Candle>();
-        private readonly Dictionary<Candle, int> indicesByCandle = new Dictionary<Candle, int>();
-        private readonly Candle[] candles;
+        // FIELDS
+        readonly Dictionary<DateTime, Candle> candlesByDate = new Dictionary<DateTime, Candle> ( );
+        readonly Dictionary<Candle, int> indicesByCandle = new Dictionary<Candle, int> ( );
 
+        // PROPERTIES
         public IEnumerable<DateTime> Dates => candlesByDate.Keys;
-        public IEnumerable<Candle> Candles => candlesByDate.Keys
-            .Select(date => candlesByDate[date]);
         public string Name { get; set; }
+        public List<Candle> Candles { get; }
 
+        // CONSTRUCTORS
         public CandleTimeSeries()
         { }
-        public CandleTimeSeries(IEnumerable<Candle> candls)
+        public CandleTimeSeries( IEnumerable<Candle> candles )
         {
-            Candle[] orderedCandles = candls
-                .OrderBy(candle => candle.Start)
-                .ToArray();
+            Candles = candles
+                .OrderBy ( candle => candle.Start )
+                .ToList ( );
 
-            int count = orderedCandles.Length;
-
-            candles = new Candle[count];
-            orderedCandles
-                .ForEach((candle, index) =>
-                {
-                    candles[index] = candle;
-                    candlesByDate.Add(candle.Start, candle);
-                    indicesByCandle.Add(candle, index);
-                });
-        }
-        public Candle GetCandle(DateTime date)
-        {
-            return candlesByDate[date];
+            Candles
+                .ForEach ( ( candle, index ) => {
+                    candlesByDate.Add ( candle.Start, candle );
+                    indicesByCandle.Add ( candle, index );
+                } );
         }
 
-        public Candle GetCandle(int index)
-        {
-            return candles[index];
-        }
-        public Candle this[DateTime date] => GetCandle(date);
-        public Candle this[int index] => GetCandle(index);
+        // STATIC CONSTRUCTORS
+        public static CandleTimeSeries Create( IEnumerable<Candle> candles ) => new CandleTimeSeries ( candles );
 
-        public int GetIndex(Candle candle)
-        {
-            return indicesByCandle[candle];
-        }
-        public int GetIndex(DateTime date)
-        {
-            return GetIndex(candlesByDate[date]);
-        }
+        // PUBLIC METHODS
+        public Candle GetCandle( DateTime date ) => candlesByDate[date];
+        public Candle GetCandle( int index ) => index >= 0 && index < Candles.Count ? Candles[index] : null;
+        public Candle GetLastCandle() => GetCandle ( Candles.Count - 1 );
+        public Candle this[DateTime date] => GetCandle ( date );
+        public Candle this[int index] => GetCandle ( index );
 
-        public bool ContainsCandleAt(DateTime date)
-        {
-            return candlesByDate.ContainsKey(date);
-        }
-        public bool HasCandles()
-        {
-            return Dates.Any();
-        }
+        public int GetIndex( Candle candle ) => indicesByCandle[candle];
+        public int GetIndex( DateTime date ) => GetIndex ( candlesByDate[date] );
 
-        public static void Plot(CandleTimeSeriesPlotInfo info)
-        {
-            PlotView view = GetPlotView(info);
+        public bool ContainsCandleAt( DateTime date ) => candlesByDate.ContainsKey ( date );
+        public bool HasCandles() => Dates.Any ( );
 
-            Form form = new Form();
-            form.Controls.Add(view);
-            form.ShowDialog();
+        public void AddCandle( Candle newCandle, bool forceSort = false )
+        {
+            Candles.Add ( newCandle );
+
+            if (forceSort) {
+                Candles.Sort ( );
+                candlesByDate.Clear ( );
+                indicesByCandle.Clear ( );
+                Candles
+                    .ForEach ( ( candle, index ) => {
+                        candlesByDate.Add ( candle.Start, candle );
+                        indicesByCandle.Add ( candle, index );
+                    } );
+            } else {
+                candlesByDate.Add ( newCandle.Start, newCandle );
+                indicesByCandle.Add ( newCandle, Candles.Count );
+            }
         }
-        public static PlotView GetPlotView(CandleTimeSeriesPlotInfo info
-            , Action<object, AxisChangedEventArgs> onAxisChangedMethod = null)
+        public static void Plot( CandleTimeSeriesPlotInfo info )
+        {
+            PlotView view = GetPlotView ( info );
+
+            Form form = new Form ( );
+            form.Controls.Add ( view );
+            form.ShowDialog ( );
+        }
+        public static PlotView GetPlotView( CandleTimeSeriesPlotInfo info
+            , Action<object, AxisChangedEventArgs> onAxisChangedMethod = null )
         {
             List<HighLowItem> items = info.Series.Candles
-                .OrderBy(candle => candle.Start)
-                .Select(candle => new HighLowItem()
-                {
-                    X = DateTimeAxis.ToDouble(candle.Start),
-                    Open = candle.Open,
-                    Close = candle.Close,
-                    High = candle.Max,
-                    Low = candle.Min,
-                })
-                .ToList();
-            CandleStickSeries series = new CandleStickSeries
-            {
+                .OrderBy ( candle => candle.Start )
+                .Select ( candle => new HighLowItem ( ) {
+                    X = DateTimeAxis.ToDouble ( candle.Start ),
+                    Open = (double)candle.Open,
+                    Close = (double)candle.Close,
+                    High = (double)candle.Max,
+                    Low = (double)candle.Min,
+                } )
+                .ToList ( );
+            CandleStickSeries series = new CandleStickSeries {
                 RenderInLegend = true,
                 Title = info.Title,
-                Background = OxyColor.FromArgb(
+                Background = OxyColor.FromArgb (
                     info.BackgroundColor.A,
                     info.BackgroundColor.R,
                     info.BackgroundColor.G,
-                    info.BackgroundColor.B),
+                    info.BackgroundColor.B ),
                 //CandleWidth = info.CandleWidth,
                 IsVisible = true,
-                DecreasingColor = OxyColor.FromArgb(
+                DecreasingColor = OxyColor.FromArgb (
                     info.DecreasingColor.A,
                     info.DecreasingColor.R,
                     info.DecreasingColor.G,
-                    info.DecreasingColor.B),
-                IncreasingColor = OxyColor.FromArgb(
+                    info.DecreasingColor.B ),
+                IncreasingColor = OxyColor.FromArgb (
                     info.IncreasingColor.A,
                     info.IncreasingColor.R,
                     info.IncreasingColor.G,
-                    info.IncreasingColor.B),
-                Color = OxyColor.FromArgb(
+                    info.IncreasingColor.B ),
+                Color = OxyColor.FromArgb (
                     info.BackgroundColor.A,
                     info.BackgroundColor.R,
                     info.BackgroundColor.G,
-                    info.BackgroundColor.B),
+                    info.BackgroundColor.B ),
                 ItemsSource = items,
                 //Hollow = info.PositiveCandlesHollow,
             };
 
-            PlotModel model = new PlotModel();
-            model.Axes.Clear();
-            DateTimeAxis timeAxis = new DateTimeAxis();
+            PlotModel model = new PlotModel ( );
+            model.Axes.Clear ( );
+            DateTimeAxis timeAxis = new DateTimeAxis ( );
             if (onAxisChangedMethod != null)
                 timeAxis.AxisChanged += onAxisChangedMethod.Invoke;
-            model.Axes.Add(timeAxis);
-            model.Series.Clear();
-            model.Series.Add(series);
-            PlotView view = new PlotView
-            {
+            model.Axes.Add ( timeAxis );
+            model.Series.Clear ( );
+            model.Series.Add ( series );
+            PlotView view = new PlotView {
                 Model = model,
                 Dock = DockStyle.Fill,
             };
             return view;
         }
-        
-        public static CandleTimeSeries Create(IEnumerable<Candle> candles)
-        {
-            CandleTimeSeries series = new CandleTimeSeries(candles);
-            return series;
-        }
 
+        // PRIVATE METHODS
         public static IEnumerable<Candle> FromTrades(
             IEnumerable<Trade> trades,
             TimeSpan? candleDuration = null,
             int? numberOfTradesPerCandle = null,
-            double? volumePerCandle = null)
+            decimal? volumePerCandle = null )
         {
+
             if (candleDuration == null &&
                 numberOfTradesPerCandle == null &&
                 volumePerCandle == null)
-                return new List<Candle>();
+                throw new InvalidOperationException ( "At least one of candleDuration, numberOfTradesPerCandle or valumePerCandle must be defined." );
 
             if (candleDuration != null)
-                return GetCandleTimeSeries(trades, candleDuration.Value);
+                return GetCandles ( trades, candleDuration.Value );
             if (numberOfTradesPerCandle != null)
-                return GetCandleTimeSeries(trades, numberOfTradesPerCandle.Value);
+                return GetCandles ( trades, numberOfTradesPerCandle.Value );
 
-            return GetCandleTimeSeries(trades, volumePerCandle.Value);
+            return GetCandles ( trades, volumePerCandle.Value );
         }
-        private static IEnumerable<Candle> GetCandleTimeSeries(IEnumerable<Trade> trades, double volumePerCandle)
+        static IEnumerable<Candle> GetCandles( IEnumerable<Trade> trades, decimal volumePerCandle )
         {
             List<Trade> sortedTrades = trades
-                .OrderBy(trade => trade.Instant)
-                .ToList();
-            if (sortedTrades.Any())
-            {
-                Trade firstTrade = sortedTrades.First();
+                .OrderBy ( trade => trade.Instant )
+                .ToList ( );
+            if (sortedTrades.Any ( )) {
+                Trade firstTrade = sortedTrades.First ( );
                 Candle candle = new Candle { Start = firstTrade.Instant };
-                foreach (Trade trade in sortedTrades)
-                {
+                foreach (Trade trade in sortedTrades) {
                     if (trade.Type == TradeType.Buy)
                         candle.BuyVolume += trade.Volume;
                     if (trade.Type == TradeType.Sell)
@@ -182,8 +174,7 @@ namespace CandleTimeSeriesAnalysis
                         candle.Max = trade.Price;
                     if (candle.Min > trade.Price)
                         candle.Min = trade.Price;
-                    if (candle.Volume >= volumePerCandle)
-                    {
+                    if (candle.Volume >= volumePerCandle) {
                         candle.Duration = trade.Instant - candle.Start;
                         candle.Close = trade.Price;
                         yield return candle;
@@ -192,76 +183,40 @@ namespace CandleTimeSeriesAnalysis
                 }
             }
         }
-        private static IEnumerable<Candle> GetCandleTimeSeries(IEnumerable<Trade> trades, int numberOfTradesPerCandle)
-        {
-            return trades
-                .OrderBy(trade => trade.Instant)
-                .Select((trade, index) => new { Trade = trade, Position = index + 1 })
-                .GroupBy(anonymous => anonymous.Position / numberOfTradesPerCandle, anonymous => anonymous.Trade)
-                .Select(grouping =>
-                {
-                    Candle candle = GetCandleFromTrades(grouping);
-                    Trade firstTrade = grouping.First();
+
+        static IEnumerable<Candle> GetCandles( IEnumerable<Trade> trades, int numberOfTradesPerCandle ) => trades
+                .OrderBy ( trade => trade.Instant )
+                .Select ( ( trade, index ) => new { Trade = trade, Position = index + 1 } )
+                .GroupBy ( anonymous => anonymous.Position / numberOfTradesPerCandle, anonymous => anonymous.Trade )
+                .Select ( grouping => {
+                    Candle candle = Candle.FromTrades ( grouping );
+                    Trade firstTrade = grouping.First ( );
                     candle.Start = firstTrade.Instant;
-                    candle.Duration = grouping.Last().Instant - firstTrade.Instant;
+                    candle.Duration = grouping.Last ( ).Instant - firstTrade.Instant;
                     return candle;
-                });
-        }
-        private static IEnumerable<Candle> GetCandleTimeSeries(IEnumerable<Trade> trades, TimeSpan candleDuration)
+                } );
+        static IEnumerable<Candle> GetCandles( IEnumerable<Trade> trades, TimeSpan candleDuration )
         {
             List<Trade> sortedTrades = trades
-                .OrderBy(trade => trade.Instant)
-                .ToList();
-            if (sortedTrades.Any())
-            {
-                DateTime firstDate = sortedTrades.First().Instant;
-                Func<Trade, int> f = t =>
-                {
+                .OrderBy ( trade => trade.Instant )
+                .ToList ( );
+            if (sortedTrades.Any ( )) {
+                DateTime firstDate = sortedTrades.First ( ).Instant;
+                Func<Trade, int> f = t => {
                     DateTime date = t.Instant;
                     TimeSpan span = date - firstDate;
-                    double factor = span.DivideBy(candleDuration);
+                    double factor = span.DivideBy ( candleDuration );
                     return (int)factor;
                 };
-                foreach (IGrouping<int, Trade> grouping in sortedTrades.GroupBy(trade => f.Invoke(trade)))
-                {
-                    Candle candle = GetCandleFromTrades(grouping);
-                    Trade firstTrade = grouping.First();
-                    int scale = f.Invoke(firstTrade);
-                    candle.Start = firstDate + candleDuration.MultiplyBy(scale);
+                foreach (IGrouping<int, Trade> grouping in sortedTrades.GroupBy ( trade => f.Invoke ( trade ) )) {
+                    Candle candle = Candle.FromTrades ( grouping );
+                    Trade firstTrade = grouping.First ( );
+                    int scale = f.Invoke ( firstTrade );
+                    candle.Start = firstDate + candleDuration.MultiplyBy ( scale );
                     candle.Duration = candleDuration;
                     yield return candle;
                 }
             }
         }
-        private static Candle GetCandleFromTrades(IEnumerable<Trade> trades)
-        {
-            List<Trade> list = trades
-                .ToList();
-
-            Candle candle = new Candle
-            {
-                Max = list
-                    .Max(trade => trade.Price),
-                Open = list.First().Price,
-                Min = list
-                    .Min(trade => trade.Price),
-                Close = list.Last().Price,
-                SellVolume = list
-                    .Where(trade => trade.Type == TradeType.Sell)
-                    .Sum(trade => trade.Volume),
-                BuyVolume = list
-                    .Where(trade => trade.Type == TradeType.Buy)
-                    .Sum(trade => trade.Volume)
-            };
-
-            return candle;
-        }
-}
-
-    public enum TradeCandleTransformation
-    {
-        TemporalSpan,
-        TradeQuantity,
-        TradeVolume,
     }
 }
