@@ -7,7 +7,7 @@ namespace CandleTimeSeriesAnalysis.Strategies
     public class TraderStreamer : ITradeStreamer
     {
         // FIELDS
-        private readonly List<Trade> trades;
+        readonly List<Trade> trades;
         // PROPERTIES
 
         // CONSTRUCTORS

@@ -8,8 +8,8 @@ namespace CandleTimeSeriesAnalysis
     public class Trade
     {
         public DateTime Instant { get; set; }
-        public decimal Price { get; set; }
-        public decimal Volume { get; set; }
+        public double Price { get; set; }
+        public double Volume { get; set; }
         public TradeType Type { get; set; }
 
         public string ToText( CultureInfo culture )
@@ -31,9 +31,9 @@ namespace CandleTimeSeriesAnalysis
                     if (index == 0)
                         trade.Instant = DateTime.ParseExact ( word, "yyyy/MM/dd HH:mm:ss.fff", culture );
                     if (index == 1)
-                        trade.Volume = decimal.Parse ( word, culture );
+                        trade.Volume = double.Parse ( word, culture );
                     if (index == 2)
-                        trade.Price = decimal.Parse ( word, culture );
+                        trade.Price = double.Parse ( word, culture );
                     if (index == 3 &&
                         Enum.TryParse ( word, true, out TradeType type ))
                         trade.Type = type;

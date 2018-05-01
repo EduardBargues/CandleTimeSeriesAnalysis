@@ -4,13 +4,13 @@ namespace CandleTimeSeriesAnalysis.Strategies
 {
     public interface IPosition : ICloneable
     {
-        decimal EntryPrice { get; }
-        Func<IWallet, decimal, decimal> Share { get; set; }
-        decimal UpperStop { get; set; }
-        decimal LowerStop { get; set; }
+        double EntryPrice { get; }
+        Func<IWallet, double, double> Share { get; set; }
+        double UpperStop { get; set; }
+        double LowerStop { get; set; }
         Predicate<DateTime> StopCondition { get; set; }
-        void Start( decimal price, IWallet wallet, IBroker broker );
-        void Stop( decimal price, IWallet wallet, IBroker broker );
-        bool ReachesStops( decimal price );
+        void Start( double price, IWallet wallet, IBroker broker );
+        void Stop( double price, IWallet wallet, IBroker broker );
+        bool ReachesStops( double price );
     }
 }

@@ -5,6 +5,6 @@ namespace CandleTimeSeriesAnalysis.Strategies
 {
     public interface ITrader
     {
-        IEnumerable<ITradeActionInfo> Trade( ITradeStreamer streamer, DateTime startDate );
+        IEnumerable<TradeActionInfo> Trade( ITradeStreamer streamer, DateTime startDate );
     }
 }

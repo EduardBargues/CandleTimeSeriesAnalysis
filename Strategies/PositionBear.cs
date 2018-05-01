@@ -2,20 +2,29 @@
 {
     public class PositionBear : Position
     {
-        public override void Start( decimal price, IWallet wallet, IBroker broker )
+        public override void Start( double price, IWallet wallet, IBroker broker )
         {
-            decimal shareToSell = Share (wallet, price);
-            decimal fee = broker.GetSellFee (wallet.StockId, shareToSell);
-            wallet.Sell (shareToSell, price);
-            wallet.Pay (fee);
+            double shareToSell = Share ( wallet, price );
+            double fee = broker.GetSellFee ( wallet.StockId, shareToSell );
+            wallet.Sell ( shareToSell, price );
+            wallet.Pay ( fee );
             CurrentShare = shareToSell;
         }
 
-        public override void Stop( decimal price, IWallet wallet, IBroker broker )
+        public override void Stop( double price, IWallet wallet, IBroker broker )
         {
-            decimal fee = broker.GetBuyFee (wallet.StockId, CurrentShare);
-            wallet.Buy (CurrentShare, price);
-            wallet.Pay (fee);
+            double fee = broker.GetBuyFee ( wallet.StockId, CurrentShare );
+            wallet.Buy ( CurrentShare, price );
+            wallet.Pay ( fee );
         }
+
+        public override object Clone() => new PositionBear ( ) {
+            StopCondition = StopCondition,
+            Share = Share,
+            LowerStop = LowerStop,
+            EntryPrice = EntryPrice,
+            UpperStop = UpperStop,
+            CurrentShare = CurrentShare,
+        };
     }
 }

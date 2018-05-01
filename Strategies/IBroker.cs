@@ -2,7 +2,7 @@
 {
     public interface IBroker
     {
-        decimal GetBuyFee(string stockId, decimal share);
-        decimal GetSellFee(string stockId, decimal share);
+        double GetBuyFee(string stockId, double share);
+        double GetSellFee(string stockId, double share);
     }
 }

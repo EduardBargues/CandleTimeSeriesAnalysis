@@ -15,7 +15,7 @@ namespace CandleTimeSeriesAnalysis.Strategies
                 Position = new PositionBear ( );
                 return new PositionStopPricesBuilder ( );
             }
-            public PositionStopPricesBuilder BullEntry()
+            public PositionStopPricesBuilder BullEnter()
             {
                 Position = new PositionBull ( );
                 return new PositionStopPricesBuilder ( );
@@ -23,7 +23,7 @@ namespace CandleTimeSeriesAnalysis.Strategies
 
             public PositionStopConditionBuilder Exit => new PositionStopConditionBuilder ( );
 
-            public PositionBuilder WithShare( Func<IWallet, decimal, decimal> shareFunction )
+            public PositionBuilder WithShare( Func<IWallet, double, double> shareFunction )
             {
                 Position.Share = shareFunction;
                 return this;

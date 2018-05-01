@@ -4,16 +4,16 @@ namespace CandleTimeSeriesAnalysis.Strategies
 {
     public class Broker : IBroker
     {
-        private readonly Func<string, decimal, decimal> buyFee;
-        private readonly Func<string, decimal, decimal> sellFee;
+        readonly Func<string, double, double> buyFee;
+        readonly Func<string, double, double> sellFee;
 
-        public Broker(Func<string, decimal, decimal> buyFee, Func<string, decimal, decimal> sellFee)
+        public Broker( Func<string, double, double> buyFee, Func<string, double, double> sellFee )
         {
             this.buyFee = buyFee;
             this.sellFee = sellFee;
         }
 
-        public decimal GetBuyFee(string stockId, decimal share) => buyFee(stockId, share);
-        public decimal GetSellFee(string stockId, decimal share) => sellFee(stockId, share);
+        public double GetBuyFee( string stockId, double share ) => buyFee ( stockId, share );
+        public double GetSellFee( string stockId, double share ) => sellFee ( stockId, share );
     }
 }

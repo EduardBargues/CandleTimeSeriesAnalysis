@@ -4,20 +4,29 @@ namespace CandleTimeSeriesAnalysis.Strategies
 {
     public class PositionBull : Position
     {
-        public override void Start( decimal price, IWallet wallet, IBroker broker )
+        public override void Start( double price, IWallet wallet, IBroker broker )
         {
-            decimal share = Share (wallet, price);
-            decimal fee = broker.GetBuyFee (wallet.StockId, share);
-            CurrentShare = Math.Max (0, share - fee);
-            wallet.Buy (CurrentShare, price);
-            wallet.Pay (fee);
+            double share = Share ( wallet, price );
+            double fee = broker.GetBuyFee ( wallet.StockId, share );
+            CurrentShare = Math.Max ( 0, share - fee );
+            wallet.Buy ( CurrentShare, price );
+            wallet.Pay ( fee );
         }
 
-        public override void Stop( decimal price, IWallet wallet, IBroker broker )
+        public override void Stop( double price, IWallet wallet, IBroker broker )
         {
-            decimal fee = broker.GetSellFee (wallet.StockId, CurrentShare);
-            wallet.Sell (CurrentShare, price);
-            wallet.Pay (fee);
+            double fee = broker.GetSellFee ( wallet.StockId, CurrentShare );
+            wallet.Sell ( CurrentShare, price );
+            wallet.Pay ( fee );
         }
+
+        public override object Clone() => new PositionBull ( ) {
+            StopCondition = StopCondition,
+            Share = Share,
+            EntryPrice = EntryPrice,
+            LowerStop = LowerStop,
+            UpperStop = UpperStop,
+            CurrentShare = CurrentShare,
+        };
     }
 }

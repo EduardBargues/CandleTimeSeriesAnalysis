@@ -4,13 +4,13 @@
     {
         public class PositionStopPricesBuilder : PositionBuilder
         {
-            public PositionStopPricesBuilder WithLowerStop( decimal lowerPrice )
+            public PositionStopPricesBuilder WithLowerStop( double lowerPrice )
             {
                 Position.LowerStop = lowerPrice;
                 return this;
             }
 
-            public PositionStopPricesBuilder WithUpperStop( decimal upperPrice )
+            public PositionStopPricesBuilder WithUpperStop( double upperPrice )
             {
                 Position.UpperStop = upperPrice;
                 return this;

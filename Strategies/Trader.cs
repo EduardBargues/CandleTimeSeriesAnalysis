@@ -11,6 +11,7 @@ namespace CandleTimeSeriesAnalysis.Strategies
         readonly List<IStrategy> strategies;
         readonly CandleTimeSeries series;
         readonly TimeSpan workPeriod;
+        Action<TradeActionInfo> tradeActionPerformed;
 
         public Trader( IWallet wallet, IBroker broker, List<IStrategy> strategies, CandleTimeSeries series, TimeSpan workPeriod )
         {
@@ -20,38 +21,43 @@ namespace CandleTimeSeriesAnalysis.Strategies
             this.series = series;
             this.workPeriod = workPeriod;
         }
-        public IEnumerable<ITradeActionInfo> Trade( ITradeStreamer streamer, DateTime startDate )
+
+        public IEnumerable<TradeActionInfo> Trade( ITradeStreamer streamer, DateTime startDate )
         {
             Candle currentCandle = null;
             IPosition currentPosition = null;
 
             foreach (Trade[] trades in streamer.Stream ( )) {
+                TradeActionInfo info;
                 bool positionOpened = currentPosition != null;
                 bool newCandleRequired = currentCandle == null ||
                                          trades.Any ( trade => trade.Instant >= currentCandle.End );
                 if (newCandleRequired) {
-                    currentPosition = positionOpened
+                    (currentPosition, info) = positionOpened
                         ? ClosePositionIfRequired ( currentPosition, trades, true )
                         : OpenPositionIfRequired ( series );
-                    currentPosition = UpdatePosition ( currentPosition, series );
-
+                    yield return info;
+                    (currentPosition, info) = UpdatePosition ( currentPosition, series );
+                    yield return info;
                     currentCandle = GetNewCandle ( trades, currentCandle?.End ?? startDate );
                     series.AddCandle ( currentCandle );
                 } else {
-                    currentPosition = ClosePositionIfRequired ( currentPosition, trades, false );
+                    (currentPosition, info) = ClosePositionIfRequired ( currentPosition, trades, false );
+                    yield return info;
                     UpdateCandle ( currentCandle, trades );
                 }
             }
         }
 
-        IPosition OpenPositionIfRequired( CandleTimeSeries candleSeries )
+        (IPosition, TradeActionInfo) OpenPositionIfRequired( CandleTimeSeries candleSeries )
         {
             Candle lastCandle = candleSeries.GetLastCandle ( );
             if (lastCandle == null) {
-                return null;
+                return (null, null);
             }
 
             IPosition position = null;
+            TradeActionInfoOpenPosition info = null;
 
             IStrategy enterStrategy = strategies
                 .FirstOrDefault ( strategy => strategy.EnterWhen ( lastCandle.End ) );
@@ -60,35 +66,69 @@ namespace CandleTimeSeriesAnalysis.Strategies
                 position.Start ( lastCandle.Close, wallet, broker );
             }
 
-            return position;
+            if (position != null) {
+                info = new TradeActionInfoOpenPosition ( ) {
+                    Price = lastCandle.Close,
+                    UpperStop = position.UpperStop,
+                    LowerStop = position.LowerStop,
+                    StockId = candleSeries.Name,
+                    WalletLiquidity = wallet.Liquidity,
+                    WalletShare = wallet.Share,
+                    Instant = lastCandle.End
+                };
+            }
+
+            return (position, info);
         }
-        IPosition UpdatePosition( IPosition position, CandleTimeSeries candleSeries )
+        (IPosition, TradeActionInfo) UpdatePosition( IPosition position, CandleTimeSeries candleSeries )
         {
             Candle lastCandle = candleSeries.GetLastCandle ( );
             if (position == null ||
                 lastCandle == null) {
-                return position;
+                return (position, null);
             }
             IPosition updatedPosition = (IPosition)position.Clone ( );
             updatedPosition.LowerStop = lastCandle.Close - (position.EntryPrice - position.LowerStop);
 
-            return updatedPosition;
+            TradeActionInfoUpdatePosition info = new TradeActionInfoUpdatePosition ( ) {
+                Price = lastCandle.Close,
+                StockId = candleSeries.Name,
+                WalletLiquidity = wallet.Liquidity,
+                WalletShare = wallet.Share,
+                NewLowerStop = updatedPosition.LowerStop,
+                NewUpperStop = updatedPosition.UpperStop,
+                Instant = lastCandle.End
+            };
+
+            return (updatedPosition, info);
         }
-        IPosition ClosePositionIfRequired( IPosition position, Trade[] trades, bool newCandleRequired )
+        (IPosition, TradeActionInfo) ClosePositionIfRequired( IPosition position, Trade[] trades, bool newCandleRequired )
         {
+            double? price = null;
             Trade limitTrade = trades
                 .FirstOrDefault ( trade => position.ReachesStops ( trade.Price ) );
-            if (limitTrade != null) {
-                position.Stop ( limitTrade.Price, wallet, broker );
-                return null;
-            }
-            if (newCandleRequired &&
-                position.StopCondition ( trades.Last ( ).Instant )) {
-                position.Stop ( trades.Last ( ).Price, wallet, broker );
-                return null;
+            if (!newCandleRequired &&
+                limitTrade != null) {
+                price = limitTrade.Price >= position.UpperStop
+                    ? position.UpperStop
+                    : position.LowerStop;
+            } else if (newCandleRequired &&
+                       position.StopCondition ( trades.Last ( ).Instant )) {
+                price = trades.Last ( ).Price;
             }
 
-            return position;
+            if (price.HasValue) {
+                position.Stop ( price.Value, wallet, broker );
+                return (null, new TradeActionInfoClosePosition ( ) {
+                    Price = price.Value,
+                    StockId = wallet.StockId,
+                    WalletLiquidity = wallet.Liquidity,
+                    WalletShare = wallet.Share,
+                    Instant = trades.First ( ).Instant,
+                });
+            } else {
+                return (position, null);
+            }
         }
         void UpdateCandle( Candle candle, Trade[] trades )
         {

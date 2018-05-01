@@ -142,7 +142,7 @@ namespace CandleTimeSeriesAnalysis
             IEnumerable<Trade> trades,
             TimeSpan? candleDuration = null,
             int? numberOfTradesPerCandle = null,
-            decimal? volumePerCandle = null )
+            double? volumePerCandle = null )
         {
 
             if (candleDuration == null &&
@@ -157,7 +157,7 @@ namespace CandleTimeSeriesAnalysis
 
             return GetCandles ( trades, volumePerCandle.Value );
         }
-        static IEnumerable<Candle> GetCandles( IEnumerable<Trade> trades, decimal volumePerCandle )
+        static IEnumerable<Candle> GetCandles( IEnumerable<Trade> trades, double volumePerCandle )
         {
             List<Trade> sortedTrades = trades
                 .OrderBy ( trade => trade.Instant )

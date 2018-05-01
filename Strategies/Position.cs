@@ -4,17 +4,19 @@ namespace CandleTimeSeriesAnalysis.Strategies
 {
     public abstract partial class Position : IPosition
     {
-        protected decimal CurrentShare;
+        protected double CurrentShare;
 
-        public decimal EntryPrice { get; set; }
-        public Func<IWallet, decimal, decimal> Share { get; set; }
-        public decimal UpperStop { get; set; }
-        public decimal LowerStop { get; set; }
+        public double EntryPrice { get; set; }
+        public Func<IWallet, double, double> Share { get; set; }
+        public double UpperStop { get; set; }
+        public double LowerStop { get; set; }
         public Predicate<DateTime> StopCondition { get; set; }
 
-        public abstract void Start( decimal price, IWallet wallet, IBroker broker );
-        public abstract void Stop( decimal price, IWallet wallet, IBroker broker );
-        public bool ReachesStops( decimal price ) => price >= EntryPrice + UpperStop ||
+        public abstract void Start( double price, IWallet wallet, IBroker broker );
+        public abstract void Stop( double price, IWallet wallet, IBroker broker );
+        public bool ReachesStops( double price ) => price >= EntryPrice + UpperStop ||
                                                      price <= EntryPrice - LowerStop;
+
+        public abstract object Clone();
     }
 }
